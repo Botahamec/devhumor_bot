@@ -1,21 +1,30 @@
 extern crate serenity;
-extern crate rawr;
 extern crate rand;
 
-use serenity::client::Client;
-use serenity::model::channel::Message;
-use serenity::prelude::{EventHandler, Context};
+use serenity::{
+	client::Client,
+	model::{
+		channel::Message,
+		gateway::Ready
+	},
+	prelude::{EventHandler, Context}
+};
 use serenity::framework::standard::{
 	StandardFramework,
 	CommandResult,
+	Args,
 	macros::{
 		command,
 		group
 	}
 };
 
+mod rawr;
 use rawr::prelude::*;
 use rand::Rng;
+
+use std::fs::File;
+use std::io::prelude::*;
 
 // SETUP COMMANDS
 
@@ -43,28 +52,29 @@ fn devhumor(ctx: &mut Context, msg: &Message) -> CommandResult {
     // Randomly selects one of the top 50 posts
 	let top_posts = hot_listing.take(50);
 	let rand_num = rand::thread_rng().gen_range(0, 50);
-	let post = top_posts[num];
+	let post = top_posts[rand_num];
 	match post.link_url() {
 		Some(url) => {},
 		None => {}
 	}
 }
 
-group! {
+group!({
 	name: "setup",
 	options: {},
 	commands: [setchannel, setinterval]
+});
 
-group! {
-	name: "general"
-	options: {}
+group!({
+	name: "general",
+	options: {},
 	commands: [devhumor]
-}
+});
 
 struct Handler;
 
 impl EventHandler for Handler {
-	fn ready(_ctx: Context, _data_about_bot: Ready) {
+	fn ready(&self, _ctx: Context, _data_about_bot: Ready) {
 		println!("It is now fun time!");
 	}
 }
