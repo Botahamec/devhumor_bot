@@ -44,10 +44,18 @@ fn devhumor(ctx: &mut Context, msg: &Message) -> CommandResult {
 	let top_posts = hot_listing.take(50);
 	let rand_num = rand::thread_rng().gen_range(0, 50);
 	let post = top_posts[num];
-	match post.link_url() {
-		Some(url) => {},
-		None => {}
+	// Tries again if there is no image in the post
+	while post.link_url() == Option::None {
+		let rand_num = rand::thread_rng().gen_range(0, 50);
+		let post = top_posts[num];
 	}
+	// Creates a message embed
+	let m = msg.channel_id.send_message(&ctx.http |m| {
+		m.embed(|e| {
+			e.title(post.title);
+			e.image(post.link_url());
+		});
+	});
 }
 
 group! {
@@ -80,7 +88,7 @@ fn main() {
 	let mut client = Client::new(DISCORD_TOKEN, Handler)
 		.expect("Error creating client");
 	client.with_framework(StandardFramework::new()
-		.configure(|c| c.prefix(":")) // set the bot's prefix to ":"
+		.configure(|c| c.prefix("!")) // set the bot's prefix to "!"
 		.group(&SETUP_GROUP)
 		.group(&GENERAL_GROUP));
 
