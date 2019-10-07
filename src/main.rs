@@ -13,7 +13,6 @@ use serenity::{
 use serenity::framework::standard::{
 	StandardFramework,
 	CommandResult,
-	Args,
 	macros::{
 		command,
 		group
@@ -26,44 +25,30 @@ use rand::Rng;
 use std::fs::File;
 use std::io::prelude::*;
 
-// SETUP COMMANDS
-
-#[command]
-fn setchannel(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
-	Ok(())
-}
-
-#[command]
-fn setinterval(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
-	Ok(())
-}
-
 // GENERAL COMMANDS
 
 #[command]
 fn devhumor(ctx: &mut Context, msg: &Message) -> CommandResult {
 	// Creates a new client to access the reddit API. You need to set a user agent so Reddit knows
     // who is using this client.
-    let client = RedditClient::new("your user agent here", AnonymousAuthenticator::new());
+    let client = RedditClient::new("DevHumor", AnonymousAuthenticator::new());
     // Access the subreddit /r/rust.
     let subreddit = client.subreddit("ProgrammerHumor");
     // Gets the hot listing of /r/rust. If the API request fails, we will panic with `expect`.
     let mut hot_listing = subreddit.hot(ListingOptions::default()).expect("Could not fetch post listing!");
     // Randomly selects one of the top 50 posts
-	let top_posts = hot_listing.take(50);
 	let rand_num = rand::thread_rng().gen_range(0, 50);
-	let post = top_posts[rand_num];
+	let post = hot_listing.nth(rand_num).unwrap();
 	match post.link_url() {
-		Some(url) => {},
-		None => {}
+		Some(url) => {if let Err(e) = msg.channel_id.say(&ctx.http, url) {
+			println!("An error occurred: {}", e);
+		};},
+		None => {if let Err(e) = msg.channel_id.say(&ctx.http, "An error occurred") {
+			println!("An error occurred: {}", e);
+		};}
 	}
+	Ok(())
 }
-
-group!({
-	name: "setup",
-	options: {},
-	commands: [setchannel, setinterval]
-});
 
 group!({
 	name: "general",
@@ -82,16 +67,15 @@ impl EventHandler for Handler {
 fn main() {
 
 	// Get key from an external file
-	let mut DISCORD_TOKEN = String::new();
-	let mut key_file = File::open("files/.key").unwrap();
-	key_file.read_to_string(&mut DISCORD_TOKEN).unwrap();
+	let mut discord_token = String::new();
+	let mut key_file = File::open(".key").unwrap();
+	key_file.read_to_string(&mut discord_token).unwrap();
 
 	// Login with a bot token from the environment
-	let mut client = Client::new(DISCORD_TOKEN, Handler)
+	let mut client = Client::new(discord_token, Handler)
 		.expect("Error creating client");
 	client.with_framework(StandardFramework::new()
-		.configure(|c| c.prefix(":")) // set the bot's prefix to ":"
-		.group(&SETUP_GROUP)
+		.configure(|c| c.prefix("!")) // set the bot's prefix to ":"
 		.group(&GENERAL_GROUP));
 
 	// start listening for events by starting a single shard
