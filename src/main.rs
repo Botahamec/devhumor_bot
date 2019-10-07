@@ -1,4 +1,5 @@
 extern crate serenity;
+extern crate rawr;
 extern crate rand;
 
 use serenity::{
@@ -19,7 +20,6 @@ use serenity::framework::standard::{
 	}
 };
 
-mod rawr;
 use rawr::prelude::*;
 use rand::Rng;
 
